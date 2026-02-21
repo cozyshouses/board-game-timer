@@ -5,69 +5,67 @@
 <title>Board Game Timer</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<!-- PWA / Fullscreen -->
 <meta name="theme-color" content="#111" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <link rel="manifest" href="manifest.webmanifest" />
 
 <style>
-  html, body { margin: 0; height: 100%; font-family: Arial, sans-serif; }
+html, body { margin:0; height:100%; font-family: Arial, sans-serif; }
 
-  .screen {
-    display: flex; flex-direction: column; justify-content: center; align-items: center;
-    height: 100%; background: #222; color: #fff; position: relative;
-  }
+.screen {
+  display:flex; flex-direction:column; justify-content:center; align-items:center;
+  height:100%; background:#222; color:#fff;
+}
 
-  .btn {
-    font-size: 22px; padding: 15px 30px; margin: 10px;
-    border: none; border-radius: 14px; background: #444; color: #fff;
-  }
+.btn {
+  font-size:22px; padding:15px 30px; margin:10px;
+  border:none; border-radius:14px; background:#444; color:#fff;
+}
 
-  .backBtn {
-    position: absolute; top: 16px; left: 16px;
-    font-size: 18px; padding: 10px 18px; border-radius: 12px;
-    border: none; background: rgba(0,0,0,.6); color: #fff;
-  }
+/* ---- ÜST BAR ---- */
+.topbar {
+  position:absolute; top:0; left:0; right:0;
+  height:60px; display:flex; align-items:center;
+  justify-content:space-between; padding:0 16px;
+  background:rgba(0,0,0,0.6);
+}
 
-  #game { display: none; height: 100%; position: relative; }
-  .grid { display: grid; height: 100%; }
+.menuBtn {
+  font-size:28px;
+  background:none;
+  border:none;
+  color:white;
+}
 
-  .player {
-    display: flex; align-items: center; justify-content: center;
-    font-size: 2.4em; user-select: none; -webkit-tap-highlight-color: transparent;
-    opacity: .4;
-  }
-  .active { opacity: 1; font-weight: bold; }
+.roundBtn {
+  font-size:18px;
+  padding:10px 18px;
+  border-radius:14px;
+  border:none;
+  background:#333;
+  color:white;
+}
 
-  .topbar {
-    position: absolute; top: 12px; left: 12px; right: 12px;
-    z-index: 10; display: flex; justify-content: space-between; align-items: center;
-    pointer-events: none;
-  }
-  .group { display: flex; gap: 14px; pointer-events: auto; }
+/* ---- GRID ---- */
+#game { display:none; height:100%; position:relative; }
 
-  .controlBtn {
-    font-size: 20px; padding: 14px 20px; border-radius: 14px; border: none;
-    background: rgba(0,0,0,.65); color: #fff;
-  }
+.grid {
+  display:grid;
+  height:100%;
+  margin-top:60px; /* üst bar boşluğu */
+}
 
-  .badge {
-    min-width: 190px; font-size: 20px; padding: 14px 22px; border-radius: 16px;
-    background: rgba(0,0,0,.4); display: flex; align-items: center; justify-content: center;
-    gap: 14px; pointer-events: auto;
-  }
+.player {
+  display:flex; align-items:center; justify-content:center;
+  font-size:2.2em;
+  opacity:.85;
+  transition:.15s;
+}
 
-  .paused { filter: brightness(.6); }
-
-  .sub {
-    margin-top: 10px;
-    opacity: .8;
-    font-size: 16px;
-    text-align: center;
-    max-width: 320px;
-    line-height: 1.3;
-  }
+.active {
+  opacity:1;
+  font-weight:bold;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.25);
+}
 </style>
 </head>
 
@@ -75,215 +73,111 @@
 
 <!-- WELCOME -->
 <div id="welcomeScreen" class="screen">
-  <h1 style="font-size: 2.6em; text-align:center; margin: 0 20px;">Welcome Board Game Timer</h1>
-  <div class="sub">2–7 kişi • Tam ekran • Mola • Round • Taslak yön oku</div>
+  <h1>Welcome Board Game Timer</h1>
   <button class="btn" onclick="closeWelcome()">Start</button>
 </div>
 
 <!-- PLAYER SELECT -->
 <div id="playerScreen" class="screen" style="display:none;">
   <h1>Kaç kişisiniz?</h1>
-  <button class="btn" onclick="setPlayers(2)">2 Kişi</button>
-  <button class="btn" onclick="setPlayers(3)">3 Kişi</button>
-  <button class="btn" onclick="setPlayers(4)">4 Kişi</button>
-  <button class="btn" onclick="setPlayers(5)">5 Kişi</button>
-  <button class="btn" onclick="setPlayers(6)">6 Kişi</button>
-  <button class="btn" onclick="setPlayers(7)">7 Kişi</button>
-</div>
-
-<!-- TIME SELECT -->
-<div id="timeScreen" class="screen" style="display:none;">
-  <button class="backBtn" onclick="goToPlayers()">⬅ BACK</button>
-  <h1>Süreyi seçin</h1>
-  <button class="btn" onclick="startGame(60)">1 Dakika</button>
-  <button class="btn" onclick="startGame(300)">5 Dakika</button>
-  <button class="btn" onclick="startGame(1200)">20 Dakika</button>
-  <button class="btn" onclick="startGame(1800)">30 Dakika</button>
-  <button class="btn" onclick="startGame(2700)">45 Dakika</button>
+  <button class="btn" onclick="setPlayers(2)">2</button>
+  <button class="btn" onclick="setPlayers(3)">3</button>
+  <button class="btn" onclick="setPlayers(4)">4</button>
+  <button class="btn" onclick="setPlayers(5)">5</button>
 </div>
 
 <!-- GAME -->
 <div id="game">
   <div class="topbar">
-    <div class="group">
-      <button class="controlBtn" onclick="goToTime()">⬅ BACK</button>
-      <button class="controlBtn" id="pauseBtn" onclick="togglePause()">⏸ Mola</button>
-      <button class="controlBtn" onclick="nextRound()">🔁 Round</button>
-    </div>
-
-    <div class="badge">
-      <span id="arrow">⬅️</span>
-      <span id="roundText">Round 1</span>
-    </div>
+    <button class="menuBtn" onclick="goToMenu()">☰</button>
+    <button class="roundBtn" id="roundBtn" onclick="nextRound()">Round 1</button>
   </div>
-
   <div id="grid" class="grid"></div>
 </div>
 
 <script>
-  // Offline (Service Worker)
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("./sw.js");
+const palette = [
+  "#F7F7F7", // Beyaz
+  "#F4A7A7", // Kırmızı
+  "#A7C7F4", // Mavi
+  "#F4E7A7", // Sarı
+  "#1C1C1C", // Siyah
+  "#F4C7A7", // Turuncu
+  "#A7F4C7"  // Yeşil
+];
+
+let players=0, times=[], current=0, round=1;
+
+function closeWelcome(){
+  welcomeScreen.style.display="none";
+  playerScreen.style.display="flex";
+}
+
+function setPlayers(c){
+  players=c;
+  playerScreen.style.display="none";
+  game.style.display="block";
+  startGame();
+}
+
+function goToMenu(){
+  game.style.display="none";
+  playerScreen.style.display="flex";
+}
+
+function startGame(){
+  times = Array(players).fill(300);
+  buildGrid();
+  render();
+}
+
+function buildGrid(){
+  grid.innerHTML="";
+  grid.style.gridTemplateColumns="1fr 1fr";
+  grid.style.gridTemplateRows=players<=2?"1fr":"1fr 1fr";
+
+  for(let i=0;i<players;i++){
+    const d=document.createElement("div");
+    d.className="player";
+    d.style.background=palette[i];
+    d.style.color = palette[i]==="#F7F7F7" ? "#000" : "#fff";
+    d.id="p"+i;
+    d.onclick=()=>tap(i);
+    grid.appendChild(d);
   }
+}
 
-  // Renkler: alfabetik (TR) -> Beyaz, Kırmızı, Mavi, Sarı, Siyah, Turuncu, Yeşil
-  // Pastel tonlar (beyaz/siyah hariç)
-  const palette = [
-    { name: "Beyaz",   bg: "#F7F7F7" },
-    { name: "Kırmızı", bg: "#F4A7A7" },
-    { name: "Mavi",    bg: "#A7C7F4" },
-    { name: "Sarı",    bg: "#F4E7A7" },
-    { name: "Siyah",   bg: "#1C1C1C" },
-    { name: "Turuncu", bg: "#F4C7A7" },
-    { name: "Yeşil",   bg: "#A7F4C7" },
-  ];
+function format(t){
+  return Math.floor(t/60)+":"+String(t%60).padStart(2,"0");
+}
 
-  let players = 0, times = [], current = 0, paused = false;
-  let round = 1, arrowLeft = true;
-
-  function closeWelcome() {
-    document.getElementById("welcomeScreen").style.display = "none";
-    document.getElementById("playerScreen").style.display = "flex";
+function render(){
+  for(let i=0;i<players;i++){
+    const e=document.getElementById("p"+i);
+    e.textContent=format(times[i]);
+    e.classList.toggle("active", i===current);
   }
+}
 
-  function setPlayers(c) {
-    players = c;
-    playerScreen.style.display = "none";
-    timeScreen.style.display = "flex";
-  }
-
-  function goToPlayers() {
-    timeScreen.style.display = "none";
-    playerScreen.style.display = "flex";
-  }
-
-  function goToTime() {
-    game.style.display = "none";
-    paused = false;
-    pauseBtn.textContent = "⏸ Mola";
-    timeScreen.style.display = "flex";
-    disableWakeLock();
-  }
-
-  function startGame(sec) {
-    times = Array(players).fill(sec);
-    current = 0;
-    round = 1;
-    arrowLeft = true;
-    updateRoundUI();
-
-    timeScreen.style.display = "none";
-    game.style.display = "block";
-
-    buildGrid();
+setInterval(()=>{
+  if(times[current]>0){
+    times[current]--;
     render();
-    enableWakeLock();
   }
+},1000);
 
-  function buildGrid() {
-    grid.innerHTML = "";
-
-    // 2-4: 2x2, 5-6: 3x2, 7: 4x2 (son hücre boş kalabilir)
-    // Basit, okunaklı bir yerleşim:
-    let cols = 2;
-    if (players >= 5 && players <= 6) cols = 3;
-    if (players === 7) cols = 4;
-
-    const rows = Math.ceil(players / cols);
-
-    grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-    grid.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
-
-    for (let i = 0; i < players; i++) {
-      const d = document.createElement("div");
-      d.className = "player";
-      d.id = "p" + i;
-
-      const bg = palette[i].bg;
-      d.style.background = bg;
-      d.style.color = bestTextColor(bg);
-
-      d.onclick = () => tap(i);
-      grid.appendChild(d);
-    }
+function tap(i){
+  if(i===current){
+    current=(current+1)%players;
+    render();
   }
+}
 
-  function bestTextColor(hex) {
-    // #RRGGBB -> luminance
-    const c = hex.replace("#", "");
-    const r = parseInt(c.slice(0,2), 16) / 255;
-    const g = parseInt(c.slice(2,4), 16) / 255;
-    const b = parseInt(c.slice(4,6), 16) / 255;
-
-    // relative luminance approx
-    const lum = 0.2126*r + 0.7152*g + 0.0722*b;
-    return lum > 0.6 ? "#111" : "#FFF";
-  }
-
-  function format(t) {
-    return Math.floor(t / 60) + ":" + String(t % 60).padStart(2, "0");
-  }
-
-  function render() {
-    for (let i = 0; i < players; i++) {
-      const e = document.getElementById("p" + i);
-      e.textContent = format(times[i]);
-      e.classList.toggle("active", i === current);
-    }
-  }
-
-  setInterval(() => {
-    if (!paused && players > 0 && times[current] > 0) {
-      times[current]--;
-      render();
-    }
-  }, 1000);
-
-  function tap(i) {
-    if (!paused && i === current) {
-      current = (current + 1) % players;
-      render();
-    }
-  }
-
-  function togglePause() {
-    paused = !paused;
-    pauseBtn.textContent = paused ? "▶ Devam" : "⏸ Mola";
-    grid.classList.toggle("paused", paused);
-    if (paused) disableWakeLock(); else enableWakeLock();
-  }
-
-  function nextRound() {
-    arrowLeft = !arrowLeft;
-    round = (round % 20) + 1;
-    updateRoundUI();
-  }
-
-  function updateRoundUI() {
-    arrow.textContent = arrowLeft ? "⬅️" : "➡️";
-    roundText.textContent = "Round " + round;
-  }
-
-  // Wake Lock (Android Chrome'da iyi çalışır)
-  let wakeLock = null;
-  async function enableWakeLock() {
-    try {
-      if ("wakeLock" in navigator) {
-        wakeLock = await navigator.wakeLock.request("screen");
-      }
-    } catch (e) {}
-  }
-  async function disableWakeLock() {
-    try {
-      if (wakeLock) {
-        await wakeLock.release();
-        wakeLock = null;
-      }
-    } catch (e) {}
-  }
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible" && !paused) enableWakeLock();
-  });
+/* ROUND BUTONU TEK */
+function nextRound(){
+  round = (round % 20) + 1;
+  roundBtn.textContent = "Round " + round;
+}
 </script>
 
 </body>
