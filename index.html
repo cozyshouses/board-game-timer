@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Board Game Timer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- PWA / Fullscreen -->
+<meta name="theme-color" content="#111">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+
+<style>
+  html, body { margin:0; height:100%; font-family: Arial, sans-serif; }
+  .screen{display:flex;flex-direction:column;justify-content:center;align-items:center;height:100%;background:#222;color:#fff;position:relative;}
+  .btn{font-size:22px;padding:15px 30px;margin:10px;border:none;border-radius:14px;background:#444;color:#fff;}
+  .backBtn{position:absolute;top:16px;left:16px;font-size:18px;padding:10px 18px;border-radius:12px;border:none;background:rgba(0,0,0,.6);color:#fff;}
+  #game{display:none;height:100%;position:relative;}
+  .grid{display:grid;height:100%;}
+  .player{display:flex;align-items:center;justify-content:center;font-size:2.4em;user-select:none;-webkit-tap-highlight-color:transparent;opacity:.4;}
+  .active{opacity:1;font-weight:bold;}
+  .topbar{position:absolute;top:12px;left:12px;right:12px;z-index:10;display:flex;justify-content:space-between;align-items:center;}
+  .group{display:flex;gap:14px;}
+  .controlBtn{font-size:20px;padding:14px 20px;border-radius:14px;border:none;background:rgba(0,0,0,.65);color:#fff;}
+  .badge{min-width:170px;font-size:20px;padding:14px 22px;border-radius:16px;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;gap:14px;}
+  .paused{filter:brightness(.6);}
+</style>
+</head>
+
+<body>
+<div id="playerScreen" class="screen">
+  <h1>Kaç kişisiniz?</h1>
+  <button class="btn" onclick="setPlayers(2)">2 Kişi</button>
+  <button class="btn" onclick="setPlayers(3)">3 Kişi</button>
+  <button class="btn" onclick="setPlayers(4)">4 Kişi</button>
+  <button class="btn" onclick="setPlayers(5)">5 Kişi</button>
+</div>
+
+<div id="timeScreen" class="screen" style="display:none">
+  <button class="backBtn" onclick="goToPlayers()">⬅ BACK</button>
+  <h1>Süreyi seçin</h1>
+  <button class="btn" onclick="startGame(60)">1 Dakika</button>
+  <button class="btn" onclick="startGame(300)">5 Dakika</button>
+  <button class="btn" onclick="startGame(1200)">20 Dakika</button>
+  <button class="btn" onclick="startGame(1800)">30 Dakika</button>
+  <button class="btn" onclick="startGame(2700)">45 Dakika</button>
+</div>
+
+<div id="game">
+  <div class="topbar">
+    <div class="group">
+      <button class="controlBtn" onclick="goToTime()">⬅ BACK</button>
+      <button class="controlBtn" id="pauseBtn" onclick="togglePause()">⏸ Mola</button>
+      <button class="controlBtn" onclick="nextRound()">🔁 Round</button>
+    </div>
+    <div class="badge">
+      <span id="arrow">⬅️</span>
+      <span id="roundText">Round 1</span>
+    </div>
+  </div>
+  <div id="grid" class="grid"></div>
+</div>
+
+<script>
+  // Offline (Service Worker)
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("./sw.js");
+  }
+
+  const colors = ["#f4a7a7","#a7c7f4","#f4e7a7","#a7f4c7","#d6a7f4"];
+  let players = 0, times = [], current = 0, paused = false;
+  let round = 1, arrowLeft = true;
+
+  function setPlayers(c){ players=c; playerScreen.style.display="none"; timeScreen.style.display="flex"; }
+  function goToPlayers(){ timeScreen.style.display="none"; playerScreen.style.display="flex"; }
+  function goToTime(){ game.style.display="none"; paused=false; pauseBtn.textContent="⏸ Mola"; timeScreen.style.display="flex"; disableWakeLock(); }
+
+  function startGame(sec){
+    times = Array(players).fill(sec);
+    current=0; round=1; arrowLeft=true; updateRoundUI();
+    timeScreen.style.display="none"; game.style.display="block";
+    buildGrid(); render();
+    enableWakeLock();
+  }
+
+  function buildGrid(){
+    grid.innerHTML="";
+    grid.style.gridTemplateColumns = players<=4 ? "1fr 1fr" : "1fr 1fr 1fr";
+    grid.style.gridTemplateRows = players<=2 ? "1fr" : "1fr 1fr";
+    for(let i=0;i<players;i++){
+      const d=document.createElement("div");
+      d.className="player"; d.style.background=colors[i]; d.id="p"+i;
+      d.onclick=()=>tap(i);
+      grid.appendChild(d);
+    }
+  }
+
+  function format(t){ return Math.floor(t/60)+":"+String(t%60).padStart(2,"0"); }
+  function render(){
+    for(let i=0;i<players;i++){
+      const e=document.getElementById("p"+i);
+      e.textContent=format(times[i]);
+      e.classList.toggle("active", i===current);
+    }
+  }
+
+  setInterval(()=>{ if(!paused && players>0 && times[current]>0){ times[current]--; render(); } }, 1000);
+
+  function tap(i){ if(!paused && i===current){ current=(current+1)%players; render(); } }
+
+  function togglePause(){
+    paused=!paused;
+    pauseBtn.textContent = paused ? "▶ Devam" : "⏸ Mola";
+    grid.classList.toggle("paused", paused);
+    if (paused) disableWakeLock(); else enableWakeLock();
+  }
+
+  function nextRound(){
+    arrowLeft=!arrowLeft;
+    round=(round%20)+1;
+    updateRoundUI();
+  }
+  function updateRoundUI(){
+    arrow.textContent = arrowLeft ? "⬅️" : "➡️";
+    roundText.textContent = "Round " + round;
+  }
+
+  // Wake Lock (ekran uyumasın) - destek varsa
+  let wakeLock = null;
+  async function enableWakeLock(){
+    try{
+      if("wakeLock" in navigator){
+        wakeLock = await navigator.wakeLock.request("screen");
+      }
+    }catch(e){}
+  }
+  async function disableWakeLock(){
+    try{
+      if(wakeLock){ await wakeLock.release(); wakeLock=null; }
+    }catch(e){}
+  }
+  document.addEventListener("visibilitychange", ()=>{
+    if(document.visibilityState==="visible" && !paused) enableWakeLock();
+  });
+</script>
+
+</body>
+</html>
